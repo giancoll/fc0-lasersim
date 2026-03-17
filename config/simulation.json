@@ -1,0 +1,89 @@
+{
+  "run": {
+    "n_events": 2,
+    "drift_method": "MC",
+    "field_type": "user",
+    "output_file": "output.root",
+    "random_seed": 42,
+    "output_level": 1,
+    "output_format": "root"
+  },
+
+  "gas": {
+    "components": ["Ar", "CF4", "iC4H10"],
+    "fractions": [95.0, 3.0, 2.0],
+    "pressure_atm": 1.0,
+    "temperature_K": 293.15,
+    "gas_file": "../gas_files/T2K_ExBxA_6x6x6_293K_760Torr.gas",
+    "save_gas_file": ""
+  },
+
+  "detector": {
+    "drift_length_mm": 974.6,
+    "pad_pitch_x_mm": 7.0,
+    "pad_pitch_y_mm": 10.0,
+    "n_pads_x": 36,
+    "n_pads_y": 32,
+    "pad_size_x_mm": 6.5,
+    "pad_size_y_mm": 9.5,
+    "tpc_bounds": {
+      "x_min_mm": 0.0,
+      "x_max_mm": 974.6,
+      "y_min_mm": -370.6,
+      "y_max_mm": 370.6,
+      "z_min_mm": -890.0,
+      "z_max_mm": 890.0
+    }
+  },
+
+  "electronics": {
+    "sampling_frequency_MHz": 40.0,
+    "n_samples": 511,
+    "gain": 1000.0,
+    "shaping_time_ns": 25.0,
+    "threshold_adc": 10,
+    "dynamic_range_mV": 2000.0,
+    "adc_bits": 12
+  },
+
+  "generator": {
+    "type": "track",
+    "laser": {
+      "beam_waist_mm": 0.5,
+      "pulse_duration_s": 5e-9,
+      "impurity_yield": 1e-3,
+      "model": "ideal",
+      "ideal": {
+        "cluster_density": 0.1
+      },
+
+      "position": {
+        "z_mm": 631.5,
+        "y_mm": 170.5,
+        "x_start_mm": 0.0,
+        "x_end_mm": 974.6
+      },
+      "direction": {
+        "dx": 1.0,
+        "dy": 0.0,
+        "dz": 0.0
+      },
+
+      "mirror": {
+        "enabled": true,
+        "x_mm": 900.0,
+        "y_mm": 170.5,
+        "z_mm": 631.5,
+        "radius_mm": 50.0,
+        "tilt_theta_deg": 45.0,
+        "tilt_phi_deg": 0.0
+      }
+    },
+    "track": {
+      "particle": "muon",
+      "momentum_GeV": 1.0,
+      "position": { "x_mm": 487.0, "y_mm": 370.6, "z_mm": 0.0 },
+      "direction": { "dx": 0.0, "dy": -1.0, "dz": 0.0 }
+    }
+  }
+}

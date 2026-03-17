@@ -1,0 +1,7 @@
+build/
+bin/tpcmc
+*.root
+*.o
+*.a
+.DS_Store
+gas_files/*.gas

@@ -1,0 +1,66 @@
+#include "TOADatabase.hxx"
+
+// Source for T%PACKAGE%_version.cxx auto-generated using the
+// Tpackage_version.cxx.in template file.
+
+#include "T%PACKAGE%_version.hxx"
+#include "%PACKAGE%_version.h"
+
+ClassImp(ND::T%PACKAGE%_version);
+
+// Trickiness so that the package version is automatically added to the
+// list of used packages.
+static ND::T%PACKAGE%_version %PACKAGE%_version;
+
+ND::T%PACKAGE%_version* ND::T%PACKAGE%_version::fThis = NULL;
+
+ND::T%PACKAGE%_version::T%PACKAGE%_version() {
+    fThis = ND::T%PACKAGE%_version::Get();
+}
+
+ND::T%PACKAGE%_version::~T%PACKAGE%_version() {}
+
+void ND::T%PACKAGE%_version::Initialize(void) {
+    // register this package.
+    ND::TOADatabase::Get().PackageSet().insert(fThis);
+}
+
+ND::T%PACKAGE%_version* ND::T%PACKAGE%_version::Get(void) {
+    // Make sure that fThis is initialized;
+    if (!fThis) {
+        // Make sure that fThis is not null before allocating a real pointer.
+        // This cruft is required so that there isn't an infinite recursion
+        // while fThis is initialized.
+        fThis = (ND::T%PACKAGE%_version*) 1;
+        // Allocate real space for the fThis pointer.
+        fThis = new ND::T%PACKAGE%_version;
+        // Now initialize
+        fThis->Initialize();
+    }
+    // Return the pointer.
+    return fThis;
+}
+
+const char* ND::T%PACKAGE%_version::GetName(void) const {
+    return %PACKAGE%_NAME;
+}
+
+const char* ND::T%PACKAGE%_version::GetVersion(void) const {
+    return %PACKAGE%_VERSION;
+}
+
+const char* ND::T%PACKAGE%_version::GetCompilationDate(void) const {
+    return %PACKAGE%_COMPILE_DATE;
+}
+
+const char* ND::T%PACKAGE%_version::GetCompilationHost(void) const {
+    return %PACKAGE%_COMPILE_HOST;
+}
+
+const char* ND::T%PACKAGE%_version::GetCompilationDirectory(void) const {
+    return %PACKAGE%_COMPILE_DIR;
+}
+
+const char* ND::T%PACKAGE%_version::GetCompilationMachineInfo(void) const {
+    return %PACKAGE%_COMPILE_UNAME;
+}
