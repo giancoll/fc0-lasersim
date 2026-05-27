@@ -1034,3 +1034,86 @@ Codex <codex@local>
 ```
 
 because no local repository `user.name` or `user.email` was configured.
+
+## 2026-05-27 Event Display Tool
+
+A reusable event display was added:
+
+```text
+analysis/event_display.py
+```
+
+Purpose:
+
+- display one event at a time;
+- show primary electrons projected on the pad plane in `(Z,Y)`;
+- show drift endpoints on the same pad-plane view;
+- show active waveform pads coloured by peak ADC;
+- update the waveform panel when the cursor is over an active pad or when a pad
+  is clicked;
+- provide a path to overlay reconstructed tracks later.
+
+Interactive use:
+
+```bash
+cd /local/simulazioni/fc0-lasersim
+source /opt/software/root-6.38.00/build/bin/thisroot.sh
+python3 analysis/event_display.py output.root
+```
+
+Useful controls:
+
+```text
+mouse move over active pad   update waveform panel
+mouse click on pad           select that pad waveform
+Previous/Next buttons        change event
+left/right keys              previous/next event
+p/n keys                     previous/next event
+```
+
+Snapshot mode, useful for tests or documentation:
+
+```bash
+python3 analysis/event_display.py /tmp/fc0_waveform_test.root \
+  --save /tmp/fc0_event_display_test.png
+```
+
+The script also works on older ROOT files without a `waveforms` tree. In that
+case it still displays the projected primary electrons and anode endpoints, and
+the waveform panel reports that no waveform is available for the event.
+
+Optional reconstructed-track overlay:
+
+```bash
+python3 analysis/event_display.py output.root --reco-csv reconstructed_tracks.csv
+```
+
+Expected CSV columns:
+
+```text
+event,track,z_mm,y_mm
+```
+
+The display groups points by `event` and `track`, then overlays each track as a
+polyline on the same `(Z,Y)` event projection. This is intended for later
+comparison of reconstructed tracks with simulated electron positions.
+
+Verification performed:
+
+```bash
+python3 analysis/event_display.py /tmp/fc0_waveform_test.root \
+  --save /tmp/fc0_event_display_test.png
+python3 -m py_compile analysis/event_display.py
+python3 analysis/event_display.py output.root \
+  --save /tmp/fc0_event_display_no_waveform.png
+```
+
+The waveform-file snapshot was produced successfully and showed:
+
+```text
+left panel:  ERAM layout, projected primary electrons, drift endpoints, active pads
+right panel: selected pad waveform versus time
+```
+
+The older `output.root` check confirmed graceful behaviour when no waveform tree
+is present.

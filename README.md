@@ -55,6 +55,36 @@ cd /local/simulazioni/fc0-lasersim
 ./build-almalinux9-gpt/tpcmc config/simulation.json
 ```
 
+## Event Display
+
+After producing a ROOT file, an interactive event display is available:
+
+```bash
+source /opt/software/root-6.38.00/build/bin/thisroot.sh
+python3 analysis/event_display.py output.root
+```
+
+It shows the event-by-event Y-Z pad-plane projection, active waveform pads, and
+the waveform for the pad under the cursor or selected by click. Waveforms require
+ROOT output level 3. Files without a `waveforms` tree still display primary and
+anode electron projections.
+
+For a non-interactive PNG snapshot:
+
+```bash
+python3 analysis/event_display.py output.root --event 0 --save analysis_plots/event_000.png
+```
+
+Optional reconstructed tracks can be overlaid from a CSV file with columns:
+
+```text
+event,track,z_mm,y_mm
+```
+
+```bash
+python3 analysis/event_display.py output.root --reco-csv reconstructed_tracks.csv
+```
+
 Useful CMake options:
 
 ```bash
@@ -64,4 +94,3 @@ Useful CMake options:
 -DFC0_WITH_GEANT4=ON
 -DDEBUG_MODE=ON
 ```
-
