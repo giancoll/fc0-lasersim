@@ -977,3 +977,60 @@ ROOTOutput.cc: accepted only output levels 1 and 2
 
 So level 3 was documented as an intended future waveform level, but was not
 implemented before this session.
+
+## 2026-05-27 Git Checkpoint
+
+After the first waveform-port implementation and verification, a local Git
+checkpoint commit was created:
+
+```text
+529309d Checkpoint waveform port
+```
+
+This commit preserves the current reversible development state for:
+
+```text
+.gitignore
+CMakeLists.txt
+README.md
+README_fc0-lasersim.md
+analysis/analyze_output.py
+src/config/Config.cc
+src/config/Config.hh
+src/electronics/WaveformBuilder.cc
+src/electronics/WaveformBuilder.hh
+src/io/EventData.hh
+src/io/EventWriter.hh
+src/io/ND280Output.cc
+src/io/ND280Output.hh
+src/io/ROOTOutput.cc
+src/io/ROOTOutput.hh
+src/main.cc
+```
+
+The local runtime file was intentionally left outside that checkpoint:
+
+```text
+config/simulation.json
+```
+
+At the time of the checkpoint, `git status --short` showed only:
+
+```text
+ M config/simulation.json
+```
+
+Useful commands:
+
+```bash
+git show --stat 529309d
+git diff 529309d
+```
+
+The commit was made with per-command identity:
+
+```text
+Codex <codex@local>
+```
+
+because no local repository `user.name` or `user.email` was configured.
