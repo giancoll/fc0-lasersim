@@ -1117,3 +1117,81 @@ right panel: selected pad waveform versus time
 
 The older `output.root` check confirmed graceful behaviour when no waveform tree
 is present.
+
+## 2026-05-28 Run Simulation and Event Display
+
+Current local run configuration observed on 2026-05-28:
+
+```text
+config/simulation.json
+n_events:      100
+generator:     track / muon
+drift_method:  MC
+output_file:   output.root
+output_level:  2
+output_format: root
+```
+
+Important point:
+
+```text
+output_level 2  -> clusters + anode drift endpoints
+output_level 3  -> clusters + anode drift endpoints + pad waveforms
+```
+
+For using the event display with pad waveforms, edit `config/simulation.json`
+before the run:
+
+```json
+"n_events": 1,
+"output_level": 3
+```
+
+For larger production runs, increase `n_events` again after validating the
+waveform/event-display workflow.
+
+Standard setup and run commands:
+
+```bash
+cd /local/simulazioni/fc0-lasersim
+
+source /opt/software/root-6.38.00/build/bin/thisroot.sh
+source /local/simulazioni/geant4/geant4-v11.4.1-install/bin/geant4.sh
+source /local/simulazioni/garfieldpp/install/share/Garfield/setupGarfield.sh
+
+cmake --build build-almalinux9-gpt -j"$(nproc)"
+
+./build-almalinux9-gpt/tpcmc config/simulation.json
+```
+
+The simulation writes:
+
+```text
+/local/simulazioni/fc0-lasersim/output.root
+```
+
+Start the event display:
+
+```bash
+python3 analysis/event_display.py output.root
+```
+
+Useful event-display commands:
+
+```bash
+python3 analysis/event_display.py output.root --event 0
+python3 analysis/event_display.py output.root --event 0 --save analysis_plots/event_000.png
+```
+
+Interactive controls:
+
+```text
+mouse over active pad  -> show that pad waveform
+click pad              -> select that waveform
+right / n              -> next event
+left / p               -> previous event
+```
+
+If the ROOT file was produced with `output_level: 2`, the event display still
+shows the electron projections and anode endpoints, but no pad waveform panel is
+available. Use `output_level: 3` to produce the `waveforms` tree.

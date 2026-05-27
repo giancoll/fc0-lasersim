@@ -55,6 +55,25 @@ cd /local/simulazioni/fc0-lasersim
 ./build-almalinux9-gpt/tpcmc config/simulation.json
 ```
 
+For a first waveform-display test, edit `config/simulation.json` before running:
+
+```json
+"n_events": 1,
+"output_level": 3
+```
+
+`output_level` is cumulative:
+
+```text
+1  clusters
+2  clusters + anode drift endpoints
+3  clusters + anode drift endpoints + pad waveforms
+```
+
+The current local config may be set to `output_level: 2`, which is enough for
+electron projections but does not write waveforms. Use `output_level: 3` when
+you want to inspect pad waveforms in the event display.
+
 ## Event Display
 
 After producing a ROOT file, an interactive event display is available:
@@ -73,6 +92,15 @@ For a non-interactive PNG snapshot:
 
 ```bash
 python3 analysis/event_display.py output.root --event 0 --save analysis_plots/event_000.png
+```
+
+Interactive controls:
+
+```text
+mouse over active pad  show that pad waveform
+click pad              select that pad waveform
+right / n              next event
+left / p               previous event
 ```
 
 Optional reconstructed tracks can be overlaid from a CSV file with columns:
