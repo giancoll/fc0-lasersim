@@ -1,6 +1,9 @@
 build/
+build*/
 bin/tpcmc
 *.root
+analysis_plots/
+__pycache__/
 *.o
 *.a
 .DS_Store

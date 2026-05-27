@@ -56,6 +56,19 @@ struct ElectronicsConfig {
     int    thresholdAdc         = 10;
     double dynamicRangeMv       = 2000.0;
     int    adcBits              = 12;
+
+    // Waveform model adapted from the original TPCMC per-pad signal code.
+    double responseTimeNs           = 206.0;
+    double waveformInternalStepNs   = 10.0;
+    int    waveformInternalSamples  = 1500;
+    int    subPadsX                 = 5;
+    int    subPadsY                 = 5;
+    int    spreadPadsX              = 3;
+    int    spreadPadsY              = 3;
+    double subPadMergeTimeNs        = 38.0;
+    double resistiveRcNsPerMm2      = 70.0;
+    double avalancheGain            = 1000.0;
+    bool   normalizeWaveforms       = true;
 };
 
 /// Circular flat mirror near the cathode for laser beam reflection [mm].

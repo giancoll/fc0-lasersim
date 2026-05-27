@@ -24,14 +24,18 @@ struct AnodeEventData {
     std::vector<int>   status;   // Garfield++ drift status code (0 = OK, else lost)
 
     // Directly-hit pad index for each anode hit (before charge spreading to neighbours)
-    std::vector<int>   padZ, padY;  // pad column (Z) and row (Y) indices
+    std::vector<int>   eramId, padZ, padY;  // ERAM id, pad column (Z), pad row (Y)
 };
 
 struct WaveformEventData {
     int eventId     = 0;
     int nPrimaries  = 0;          // primary electrons in the event
     int nActivePads = 0;          // pads with signal
+    int nSamples    = 0;          // ADC samples per waveform
+    float samplePeriodNs = 0.0f;
 
-    std::vector<int> padX, padY;              // pad column / row indices
-    std::vector<std::vector<int>> adcWaveforms; // [pad][sample] ADC counts
+    std::vector<int> eramId, padZ, padY;      // local pad address
+    std::vector<int> peakSample, peakAdc;     // simple per-pad summary
+    std::vector<int> adcStart, adcLength;     // slice of adc for each pad
+    std::vector<int> adc;                     // concatenated ADC waveforms
 };

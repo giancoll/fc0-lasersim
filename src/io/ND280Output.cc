@@ -135,6 +135,14 @@ void ND280Output::WriteEvent(const AnodeEventData & data,
 
 }
 
+void ND280Output::WriteEvent(const WaveformEventData& data,
+                              std::vector<TVector3> truePositions,
+                              std::vector<TVector3> trueDirections) {
+
+    std::cout << "[ND280Output]: There is no ND280 output at waveform level." << std::endl;
+
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 void ND280Output::Finalize() {
     if (m_file && m_file->IsOpen()) {

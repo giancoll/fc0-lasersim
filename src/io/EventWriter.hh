@@ -17,6 +17,7 @@ public:
     /// truePositions / trueDirections: beam geometry points (origin, mirror hit, exit).
     virtual void WriteEvent(const ClusterEventData&  data, std::vector<TVector3> truePositions, std::vector<TVector3> trueDirections) = 0;
     virtual void WriteEvent(const AnodeEventData&    data, std::vector<TVector3> truePositions, std::vector<TVector3> trueDirections) = 0;
+    virtual void WriteEvent(const WaveformEventData& data, std::vector<TVector3> truePositions, std::vector<TVector3> trueDirections) = 0;
 
     virtual void Finalize() = 0;
     virtual bool IsInitialized() const = 0;

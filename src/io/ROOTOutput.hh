@@ -20,6 +20,7 @@ public:
 
     void WriteEvent(const ClusterEventData&  data, std::vector<TVector3> truePositions, std::vector<TVector3> trueDirections) override;
     void WriteEvent(const AnodeEventData&    data, std::vector<TVector3> truePositions, std::vector<TVector3> trueDirections) override;
+    void WriteEvent(const WaveformEventData& data, std::vector<TVector3> truePositions, std::vector<TVector3> trueDirections) override;
 
     void Finalize() override;
     bool IsInitialized() const override { return m_initialized; }
@@ -27,6 +28,7 @@ public:
 private:
     void InitClusterTree();
     void InitAnodeTree();
+    void InitWaveformTree();
 
     TFile* m_file         = nullptr;
     TTree* m_treeCluster  = nullptr;
@@ -47,5 +49,13 @@ private:
     int                m_nAnodeHits = 0;
     std::vector<float> m_an_z, m_an_y, m_an_t;
     std::vector<int>   m_an_status;
-    std::vector<int>   m_an_padZ, m_an_padY;
+    std::vector<int>   m_an_eramId, m_an_padZ, m_an_padY;
+
+    // level 3
+    int                m_nActivePads = 0;
+    int                m_nSamples = 0;
+    float              m_samplePeriodNs = 0.0f;
+    std::vector<int>   m_wf_eramId, m_wf_padZ, m_wf_padY;
+    std::vector<int>   m_wf_peakSample, m_wf_peakAdc;
+    std::vector<int>   m_wf_adcStart, m_wf_adcLength, m_wf_adc;
 };

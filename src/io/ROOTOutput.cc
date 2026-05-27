@@ -11,10 +11,10 @@ ROOTOutput::~ROOTOutput() {
 
 void ROOTOutput::Initialize(const std::string& filename, int outputLevel,
                              const Config& /*cfg*/) {
-    if (outputLevel < 1 || outputLevel > 2)
+    if (outputLevel < 1 || outputLevel > 3)
         throw std::runtime_error(
             "ROOTOutput: unknown output_level " + std::to_string(outputLevel) +
-            " (must be 1, 2)");
+            " (must be 1, 2, or 3)");
 
     m_level = outputLevel;
     m_file  = new TFile(filename.c_str(), "RECREATE");
@@ -23,6 +23,7 @@ void ROOTOutput::Initialize(const std::string& filename, int outputLevel,
 
     InitClusterTree();
     if (m_level >= 2) InitAnodeTree();
+    if (m_level >= 3) InitWaveformTree();
 
     m_initialized = true;
     std::cout << "[ROOTOutput] Output level " << m_level
@@ -67,6 +68,7 @@ void ROOTOutput::InitAnodeTree() {
     m_treeAnode->Branch("anode_y",      &m_an_y);    // Y = vertical   [mm]
     m_treeAnode->Branch("anode_t",      &m_an_t);
     m_treeAnode->Branch("anode_status", &m_an_status);
+    m_treeAnode->Branch("anode_eram",   &m_an_eramId);
     m_treeAnode->Branch("anode_padZ",   &m_an_padZ); // directly-hit pad column
     m_treeAnode->Branch("anode_padY",   &m_an_padY); // directly-hit pad row
 }
@@ -80,9 +82,50 @@ void ROOTOutput::WriteEvent(const AnodeEventData& data, std::vector<TVector3> /*
     m_an_y       = data.y;
     m_an_t       = data.t;
     m_an_status  = data.status;
+    m_an_eramId  = data.eramId;
     m_an_padZ    = data.padZ;
     m_an_padY    = data.padY;
     m_treeAnode->Fill();
+}
+
+// --- Waveform level ---------------------------------------------------------
+
+void ROOTOutput::InitWaveformTree() {
+    m_treeWaveform = new TTree("waveforms",
+                               "Digitized per-pad waveforms after electronics response");
+    m_treeWaveform->Branch("eventId",        &m_eventId);
+    m_treeWaveform->Branch("nPrimaries",     &m_nPrimaries);
+    m_treeWaveform->Branch("nActivePads",    &m_nActivePads);
+    m_treeWaveform->Branch("nSamples",       &m_nSamples);
+    m_treeWaveform->Branch("samplePeriodNs", &m_samplePeriodNs);
+    m_treeWaveform->Branch("wf_eram",        &m_wf_eramId);
+    m_treeWaveform->Branch("wf_padZ",        &m_wf_padZ);
+    m_treeWaveform->Branch("wf_padY",        &m_wf_padY);
+    m_treeWaveform->Branch("wf_peakSample",  &m_wf_peakSample);
+    m_treeWaveform->Branch("wf_peakAdc",     &m_wf_peakAdc);
+    m_treeWaveform->Branch("wf_adcStart",    &m_wf_adcStart);
+    m_treeWaveform->Branch("wf_adcLength",   &m_wf_adcLength);
+    m_treeWaveform->Branch("wf_adc",         &m_wf_adc);
+}
+
+void ROOTOutput::WriteEvent(const WaveformEventData& data,
+                            std::vector<TVector3> /*truePositions*/,
+                            std::vector<TVector3> /*trueDirections*/) {
+    if (!m_treeWaveform) return;
+    m_eventId        = data.eventId;
+    m_nPrimaries     = data.nPrimaries;
+    m_nActivePads    = data.nActivePads;
+    m_nSamples       = data.nSamples;
+    m_samplePeriodNs = data.samplePeriodNs;
+    m_wf_eramId      = data.eramId;
+    m_wf_padZ        = data.padZ;
+    m_wf_padY        = data.padY;
+    m_wf_peakSample  = data.peakSample;
+    m_wf_peakAdc     = data.peakAdc;
+    m_wf_adcStart    = data.adcStart;
+    m_wf_adcLength   = data.adcLength;
+    m_wf_adc         = data.adc;
+    m_treeWaveform->Fill();
 }
 
 

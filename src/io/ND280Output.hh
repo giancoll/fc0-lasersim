@@ -32,6 +32,10 @@ public:
                     std::vector<TVector3> truePositions,
                     std::vector<TVector3> trueDirections) override;
 
+    void WriteEvent(const WaveformEventData& data,
+                    std::vector<TVector3> truePositions,
+                    std::vector<TVector3> trueDirections) override;
+
     void Finalize() override;
     bool IsInitialized() const override { return m_initialized; }
 

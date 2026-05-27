@@ -8,6 +8,7 @@
 #include "detector/FieldManager.hh"
 #include "detector/DriftEngine.hh"
 #include "detector/HATGeometry.hh"
+#include "electronics/WaveformBuilder.hh"
 #include "generator/PrimaryGenerator.hh"
 #include "generator/LaserGenerator.hh"
 #include "generator/TrackGenerator.hh"
@@ -115,6 +116,11 @@ int main(int argc, char* argv[]) {
     }
     writer->Initialize(cfg.run.outputFile, outputLevel, cfg);
 
+    std::unique_ptr<WaveformBuilder> waveformBuilder;
+    if (outputLevel >= 3) {
+        waveformBuilder = std::make_unique<WaveformBuilder>(cfg);
+    }
+
     // ------------------------------------------------------------------
     // 6. Event loop
     // ------------------------------------------------------------------
@@ -168,8 +174,19 @@ int main(int argc, char* argv[]) {
                     if (ep.status == 0) ++anData.nAnodeHits;
 
                     // Directly-hit pad (before charge spreading to neighbours)
-                    anData.padZ.push_back(static_cast<int>(std::floor(ep.z / cfg.detector.padPitchXMm)));
-                    anData.padY.push_back(static_cast<int>(std::floor(ep.y / cfg.detector.padPitchYMm)));
+                    int eramId = -1;
+                    int padY = -1;
+                    int padZ = -1;
+                    if (hat.GetPadIndices(ep.y, ep.z, eramId, padY, padZ) &&
+                        !hat.GetERAM(eramId).isQuartzWindow) {
+                        anData.eramId.push_back(eramId);
+                        anData.padZ.push_back(padZ);
+                        anData.padY.push_back(padY);
+                    } else {
+                        anData.eramId.push_back(-1);
+                        anData.padZ.push_back(-1);
+                        anData.padY.push_back(-1);
+                    }
 
 
                 }
@@ -177,6 +194,10 @@ int main(int argc, char* argv[]) {
 
             writer->WriteEvent(anData, generator->GetTruePositions(), generator->GetTrueDirections());
 
+            if (waveformBuilder) {
+                auto wfData = waveformBuilder->Build(ev, anData);
+                writer->WriteEvent(wfData, generator->GetTruePositions(), generator->GetTrueDirections());
+            }
         }
     }
 

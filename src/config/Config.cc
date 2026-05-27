@@ -1,13 +1,23 @@
 #include "config/Config.hh"
+#include <filesystem>
 #include <fstream>
 #include <stdexcept>
 
 using json = nlohmann::json;
+namespace fs = std::filesystem;
 
 Config Config::Load(const std::string& path) {
     std::ifstream f(path);
     if (!f.is_open())
         throw std::runtime_error("Config: cannot open file: " + path);
+
+    const fs::path configDir = fs::absolute(fs::path(path)).parent_path();
+    const auto resolveConfigPath = [&configDir](const std::string& value) {
+        if (value.empty()) return value;
+        const fs::path p(value);
+        if (p.is_absolute()) return p.lexically_normal().string();
+        return (configDir / p).lexically_normal().string();
+    };
 
     json j = json::parse(f);
     Config cfg;
@@ -31,8 +41,8 @@ Config Config::Load(const std::string& path) {
         if (g.contains("fractions"))  cfg.gas.fractions  = g["fractions"].get<std::vector<double>>();
         cfg.gas.pressureAtm  = g.value("pressure_atm",  cfg.gas.pressureAtm);
         cfg.gas.temperatureK = g.value("temperature_K", cfg.gas.temperatureK);
-        cfg.gas.gasFile      = g.value("gas_file",      cfg.gas.gasFile);
-        cfg.gas.saveGasFile  = g.value("save_gas_file", cfg.gas.saveGasFile);
+        cfg.gas.gasFile      = resolveConfigPath(g.value("gas_file",      cfg.gas.gasFile));
+        cfg.gas.saveGasFile  = resolveConfigPath(g.value("save_gas_file", cfg.gas.saveGasFile));
     }
 
     // --- detector ---
@@ -67,6 +77,17 @@ Config Config::Load(const std::string& path) {
         cfg.electronics.thresholdAdc         = e.value("threshold_adc",          cfg.electronics.thresholdAdc);
         cfg.electronics.dynamicRangeMv       = e.value("dynamic_range_mV",       cfg.electronics.dynamicRangeMv);
         cfg.electronics.adcBits              = e.value("adc_bits",               cfg.electronics.adcBits);
+        cfg.electronics.responseTimeNs          = e.value("response_time_ns",              cfg.electronics.responseTimeNs);
+        cfg.electronics.waveformInternalStepNs  = e.value("waveform_internal_step_ns",     cfg.electronics.waveformInternalStepNs);
+        cfg.electronics.waveformInternalSamples = e.value("waveform_internal_samples",     cfg.electronics.waveformInternalSamples);
+        cfg.electronics.subPadsX                = e.value("subpads_x",                     cfg.electronics.subPadsX);
+        cfg.electronics.subPadsY                = e.value("subpads_y",                     cfg.electronics.subPadsY);
+        cfg.electronics.spreadPadsX             = e.value("spread_pads_x",                 cfg.electronics.spreadPadsX);
+        cfg.electronics.spreadPadsY             = e.value("spread_pads_y",                 cfg.electronics.spreadPadsY);
+        cfg.electronics.subPadMergeTimeNs       = e.value("subpad_merge_time_ns",          cfg.electronics.subPadMergeTimeNs);
+        cfg.electronics.resistiveRcNsPerMm2     = e.value("resistive_rc_ns_per_mm2",       cfg.electronics.resistiveRcNsPerMm2);
+        cfg.electronics.avalancheGain           = e.value("avalanche_gain",                cfg.electronics.avalancheGain);
+        cfg.electronics.normalizeWaveforms      = e.value("normalize_waveforms",           cfg.electronics.normalizeWaveforms);
     }
 
     // --- generator ---
