@@ -74,6 +74,29 @@ The current local config may be set to `output_level: 2`, which is enough for
 electron projections but does not write waveforms. Use `output_level: 3` when
 you want to inspect pad waveforms in the event display.
 
+You can check whether a ROOT file contains waveforms with:
+
+```bash
+rootls -t output.root
+```
+
+If the listing only shows:
+
+```text
+clusters
+anode
+```
+
+then the file was produced without waveform output. Re-run the simulation with
+`output_level: 3` and then reopen the new `output.root` in the event display.
+The listing must include:
+
+```text
+waveforms
+```
+
+for pad waveform display to be available.
+
 ## Event Display
 
 After producing a ROOT file, an interactive event display is available:

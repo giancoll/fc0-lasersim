@@ -1195,3 +1195,94 @@ left / p               -> previous event
 If the ROOT file was produced with `output_level: 2`, the event display still
 shows the electron projections and anode endpoints, but no pad waveform panel is
 available. Use `output_level: 3` to produce the `waveforms` tree.
+
+## 2026-05-28 Waveform Display Troubleshooting
+
+Observed issue:
+
+```text
+The event display opened output.root, but no waveforms were visible.
+```
+
+Cause:
+
+```text
+config/simulation.json had output_level: 2
+```
+
+The current `output.root` was checked with:
+
+```bash
+rootls -t output.root
+```
+
+and contained only:
+
+```text
+clusters
+anode
+```
+
+Therefore the event display could show the projected electrons and drift
+endpoints, but it had no waveform tree to read.
+
+The previously verified waveform test file was:
+
+```text
+/tmp/fc0_waveform_test.root
+```
+
+and `rootls -t /tmp/fc0_waveform_test.root` showed:
+
+```text
+clusters
+anode
+waveforms
+```
+
+To produce a new displayable waveform file in the project directory:
+
+1. Edit `config/simulation.json`.
+
+For a quick test, use:
+
+```json
+"n_events": 1,
+"output_level": 3
+```
+
+2. Run the simulation:
+
+```bash
+cd /local/simulazioni/fc0-lasersim
+source /opt/software/root-6.38.00/build/bin/thisroot.sh
+source /local/simulazioni/geant4/geant4-v11.4.1-install/bin/geant4.sh
+source /local/simulazioni/garfieldpp/install/share/Garfield/setupGarfield.sh
+
+./build-almalinux9-gpt/tpcmc config/simulation.json
+```
+
+3. Verify that waveforms were written:
+
+```bash
+rootls -t output.root
+```
+
+The output must include:
+
+```text
+waveforms
+```
+
+4. Open the event display:
+
+```bash
+python3 analysis/event_display.py output.root
+```
+
+Summary:
+
+```text
+output_level: 2  -> no waveform tree, no pad waveforms in display
+output_level: 3  -> writes waveforms tree, pad waveforms visible in display
+```
