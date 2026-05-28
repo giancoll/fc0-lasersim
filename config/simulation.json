@@ -1,11 +1,11 @@
 {
   "run": {
-    "n_events": 2,
+    "n_events": 10,
     "drift_method": "MC",
     "field_type": "user",
     "output_file": "output.root",
     "random_seed": 42,
-    "output_level": 1,
+    "output_level": 3,
     "output_format": "root"
   },
 
@@ -43,7 +43,17 @@
     "shaping_time_ns": 25.0,
     "threshold_adc": 10,
     "dynamic_range_mV": 2000.0,
-    "adc_bits": 12
+    "adc_bits": 12,
+    "gain_model": "constant",
+    "avalanche_gain": 1000.0,
+    "polya_gain": {
+      "mean_gain": 1000.0,
+      "polya_parameter": 2.3,
+      "max_gain_ratio": 5.0,
+      "n_bins": 1000,
+      "random_seed": -1
+    },
+    "normalize_waveforms": true
   },
 
   "generator": {
@@ -80,10 +90,10 @@
       }
     },
     "track": {
-      "particle": "muon",
+	  "particle": "muon",
       "momentum_GeV": 1.0,
-      "position": { "x_mm": 487.0, "y_mm": 370.6, "z_mm": 0.0 },
-      "direction": { "dx": 0.0, "dy": -1.0, "dz": 0.0 }
+      "position": { "x_mm": 187.0, "y_mm": 100, "z_mm": -400.0 },
+      "direction": { "dx": 0.0, "dy": 0.0, "dz": 1.0 }
     }
   }
 }

@@ -67,7 +67,13 @@ struct ElectronicsConfig {
     int    spreadPadsY              = 3;
     double subPadMergeTimeNs        = 38.0;
     double resistiveRcNsPerMm2      = 70.0;
+    std::string gainModel           = "constant";
     double avalancheGain            = 1000.0;
+    double polyaMeanGain            = 1000.0;
+    double polyaParameter           = 2.3;
+    double polyaMaxGainRatio        = 5.0;
+    int    polyaBins                = 1000;
+    int    polyaRandomSeed          = -1;
     bool   normalizeWaveforms       = true;
 };
 

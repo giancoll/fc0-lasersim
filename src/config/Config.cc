@@ -86,7 +86,21 @@ Config Config::Load(const std::string& path) {
         cfg.electronics.spreadPadsY             = e.value("spread_pads_y",                 cfg.electronics.spreadPadsY);
         cfg.electronics.subPadMergeTimeNs       = e.value("subpad_merge_time_ns",          cfg.electronics.subPadMergeTimeNs);
         cfg.electronics.resistiveRcNsPerMm2     = e.value("resistive_rc_ns_per_mm2",       cfg.electronics.resistiveRcNsPerMm2);
+        cfg.electronics.gainModel               = e.value("gain_model",                    cfg.electronics.gainModel);
         cfg.electronics.avalancheGain           = e.value("avalanche_gain",                cfg.electronics.avalancheGain);
+        cfg.electronics.polyaMeanGain           = e.value("polya_mean_gain",               cfg.electronics.polyaMeanGain);
+        cfg.electronics.polyaParameter          = e.value("polya_parameter",               cfg.electronics.polyaParameter);
+        cfg.electronics.polyaMaxGainRatio       = e.value("polya_max_gain_ratio",          cfg.electronics.polyaMaxGainRatio);
+        cfg.electronics.polyaBins               = e.value("polya_bins",                    cfg.electronics.polyaBins);
+        cfg.electronics.polyaRandomSeed         = e.value("polya_random_seed",             cfg.electronics.polyaRandomSeed);
+        if (e.contains("polya_gain")) {
+            const auto& p = e["polya_gain"];
+            cfg.electronics.polyaMeanGain     = p.value("mean_gain",       cfg.electronics.polyaMeanGain);
+            cfg.electronics.polyaParameter    = p.value("polya_parameter", cfg.electronics.polyaParameter);
+            cfg.electronics.polyaMaxGainRatio = p.value("max_gain_ratio",  cfg.electronics.polyaMaxGainRatio);
+            cfg.electronics.polyaBins         = p.value("n_bins",          cfg.electronics.polyaBins);
+            cfg.electronics.polyaRandomSeed   = p.value("random_seed",     cfg.electronics.polyaRandomSeed);
+        }
         cfg.electronics.normalizeWaveforms      = e.value("normalize_waveforms",           cfg.electronics.normalizeWaveforms);
     }
 

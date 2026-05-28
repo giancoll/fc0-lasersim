@@ -906,10 +906,12 @@ Max peak ADC: 4093
 Min peak ADC: 14
 ```
 
-Caveats for the next development step:
+Caveats after the first waveform-port step:
 
-- The old TPCMC code used `MC_ResMM::eGain()` for per-electron amplification.
-  The first port uses configurable `electronics.avalanche_gain` instead.
+- The first waveform port used configurable `electronics.avalanche_gain`
+  instead of the old TPCMC `MC_ResMM::eGain()` per-electron amplification.
+  This was addressed later by adding `electronics.gain_model = "polya"` while
+  keeping the constant gain as the default.
 - The old DAQ/AQS writer and exact card/chip/channel mapping were not ported
   yet. The new output is ROOT waveform data only.
 - The waveform builder currently uses all endpoints that fall in an active pad
@@ -1362,3 +1364,108 @@ No display bug was found for this observation.
 The current run geometry mostly creates waveform pads in ERAM 2.
 ERAM 3 is skipped by design because it is the quartz-window ERAM.
 ```
+
+## 2026-05-29 Configurable Avalanche Gain Models
+
+Implemented configurable gain selection for waveform generation.
+
+Default behaviour remains a constant per-electron avalanche gain:
+
+```json
+"electronics": {
+  "gain_model": "constant",
+  "avalanche_gain": 1000.0,
+  "normalize_waveforms": true
+}
+```
+
+The old TPCMC `MC_ResMM::eGain()` Polya-style option is now available:
+
+```json
+"electronics": {
+  "gain_model": "polya",
+  "polya_gain": {
+    "mean_gain": 1000.0,
+    "polya_parameter": 2.3,
+    "max_gain_ratio": 5.0,
+    "n_bins": 1000,
+    "random_seed": -1
+  },
+  "normalize_waveforms": true
+}
+```
+
+Meaning of the Polya parameters:
+
+```text
+mean_gain:        old MC_ResMM MeanGain, default 1000
+polya_parameter:  old MC_ResMM PolyPara, default 2.3
+max_gain_ratio:   old eGain integration upper ratio, default 5
+n_bins:           old eGain CDF bin count, default 1000
+random_seed:      -1 derives the gain RNG seed from run.random_seed
+```
+
+Implementation notes:
+
+- `WaveformBuilder` now samples the endpoint charge through `SampleAvalancheGain()`.
+- `gain_model = "constant"` uses `electronics.avalanche_gain`.
+- `gain_model = "polya"` or `"mc_resmm_polya"` builds the same discrete inverse
+  CDF used by `MC_ResMM::eGain()`.
+- The old strict CDF-bin selection is preserved; sampled Polya gains are integer
+  values derived from `gain_ratio_center * mean_gain`.
+- `electronics.gain` is still kept for the ADC conversion scale used only when
+  `normalize_waveforms` is false. It is not the per-electron avalanche gain.
+- With `normalize_waveforms: true`, a uniform scale change is removed by
+  event-level normalization, but Polya still changes relative charge sharing
+  because each electron receives an independent gain.
+
+Files changed:
+
+```text
+src/config/Config.hh
+src/config/Config.cc
+src/electronics/WaveformBuilder.hh
+src/electronics/WaveformBuilder.cc
+config/simulation.json
+README.md
+README_fc0-lasersim.md
+```
+
+Verification:
+
+```bash
+cmake --build build-almalinux9-gpt -j2
+```
+
+completed successfully.
+
+Two one-event runtime smoke tests were also run with temporary configs:
+
+```text
+/tmp/fc0_gain_constant.json -> /tmp/fc0_gain_constant.root
+/tmp/fc0_gain_polya.json    -> /tmp/fc0_gain_polya.root
+```
+
+Both outputs contained the expected ROOT trees:
+
+```text
+clusters
+anode
+waveforms
+```
+
+A PyROOT check of the waveform tree reported:
+
+```text
+constant entries 1 nActivePads 502
+polya    entries 1 nActivePads 456
+```
+
+Git/checkpoint decision:
+
+- `config/simulation.json` is intentionally included in the checkpoint.
+- Its current run block is treated as the repository default waveform/event-display
+  test configuration, not as an accidental local runtime edit.
+- The committed default uses 10 MC track events, output level 3, ROOT output,
+  constant avalanche gain, and the old MC_ResMM Polya parameters exposed for
+  switching with `electronics.gain_model = "polya"`.

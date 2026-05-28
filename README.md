@@ -97,6 +97,39 @@ waveforms
 
 for pad waveform display to be available.
 
+## Waveform Gain Model
+
+Pad waveforms use a configurable per-electron avalanche gain. The default is a
+constant gain:
+
+```json
+"electronics": {
+  "gain_model": "constant",
+  "avalanche_gain": 1000.0,
+  "normalize_waveforms": true
+}
+```
+
+The old TPCMC `MC_ResMM::eGain()` Polya-style gain can be enabled with:
+
+```json
+"electronics": {
+  "gain_model": "polya",
+  "polya_gain": {
+    "mean_gain": 1000.0,
+    "polya_parameter": 2.3,
+    "max_gain_ratio": 5.0,
+    "n_bins": 1000,
+    "random_seed": -1
+  },
+  "normalize_waveforms": true
+}
+```
+
+`random_seed: -1` derives an independent gain RNG seed from `run.random_seed`.
+The older `electronics.gain` field is still the ADC conversion factor used only
+when `normalize_waveforms` is false.
+
 ## Event Display
 
 After producing a ROOT file, an interactive event display is available:

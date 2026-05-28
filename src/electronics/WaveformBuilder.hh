@@ -1,5 +1,6 @@
 #pragma once
 
+#include <random>
 #include <vector>
 
 #include "config/Config.hh"
@@ -10,9 +11,14 @@ class WaveformBuilder {
 public:
     explicit WaveformBuilder(const Config& cfg);
 
-    WaveformEventData Build(int eventId, const AnodeEventData& anode) const;
+    WaveformEventData Build(int eventId, const AnodeEventData& anode);
 
 private:
+    enum class GainModel {
+        Constant,
+        Polya
+    };
+
     struct LocalHit {
         int eramId = -1;
         double z = 0.0;
@@ -42,10 +48,17 @@ private:
         }
     };
 
-    std::vector<LocalHit> CollectLocalHits(const AnodeEventData& anode) const;
+    std::vector<LocalHit> CollectLocalHits(const AnodeEventData& anode);
     std::vector<SubPadSignal> ClusterSubPads(const std::vector<LocalHit>& hits) const;
     std::vector<double> BuildResponseKernel() const;
+    void BuildPolyaGainTable();
+    double SampleAvalancheGain();
 
     Config m_cfg;
     HATGeometry m_geometry;
+    GainModel m_gainModel = GainModel::Constant;
+    std::mt19937_64 m_gainRng;
+    std::uniform_real_distribution<double> m_unitDistribution{0.0, 1.0};
+    std::vector<double> m_polyaCdf;
+    std::vector<double> m_polyaGainRatioCenter;
 };

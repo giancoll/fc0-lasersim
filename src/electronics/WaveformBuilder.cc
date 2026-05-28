@@ -1,9 +1,13 @@
 #include "electronics/WaveformBuilder.hh"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <map>
+#include <stdexcept>
+#include <string>
 
 namespace {
 
@@ -17,13 +21,38 @@ int adcMaximum(int adcBits) {
     return (1 << adcBits) - 1;
 }
 
+std::string lowerCopy(std::string value) {
+    std::transform(value.begin(), value.end(), value.begin(),
+                   [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+    return value;
+}
+
+std::uint64_t defaultGainSeed(int runSeed) {
+    return static_cast<std::uint64_t>(static_cast<std::int64_t>(runSeed)) +
+           0x9e3779b97f4a7c15ULL;
+}
+
 } // namespace
 
 WaveformBuilder::WaveformBuilder(const Config& cfg)
-    : m_cfg(cfg) {}
+    : m_cfg(cfg),
+      m_gainRng(cfg.electronics.polyaRandomSeed >= 0
+                    ? static_cast<std::uint64_t>(cfg.electronics.polyaRandomSeed)
+                    : defaultGainSeed(cfg.run.randomSeed)) {
+    const std::string model = lowerCopy(m_cfg.electronics.gainModel);
+    if (model == "constant") {
+        m_gainModel = GainModel::Constant;
+    } else if (model == "polya" || model == "mc_resmm_polya") {
+        m_gainModel = GainModel::Polya;
+        BuildPolyaGainTable();
+    } else {
+        throw std::runtime_error("WaveformBuilder: unknown electronics.gain_model: " +
+                                 m_cfg.electronics.gainModel);
+    }
+}
 
 WaveformEventData WaveformBuilder::Build(int eventId,
-                                         const AnodeEventData& anode) const {
+                                         const AnodeEventData& anode) {
     WaveformEventData out;
     out.eventId = eventId;
     out.nPrimaries = anode.nPrimaries;
@@ -161,7 +190,7 @@ WaveformEventData WaveformBuilder::Build(int eventId,
 }
 
 std::vector<WaveformBuilder::LocalHit>
-WaveformBuilder::CollectLocalHits(const AnodeEventData& anode) const {
+WaveformBuilder::CollectLocalHits(const AnodeEventData& anode) {
     std::vector<LocalHit> hits;
     hits.reserve(anode.z.size());
 
@@ -184,7 +213,7 @@ WaveformBuilder::CollectLocalHits(const AnodeEventData& anode) const {
             continue;
         }
 
-        hits.push_back({eramId, localZ, localY, anode.t[i], m_cfg.electronics.avalancheGain});
+        hits.push_back({eramId, localZ, localY, anode.t[i], SampleAvalancheGain()});
     }
 
     return hits;
@@ -230,6 +259,75 @@ WaveformBuilder::ClusterSubPads(const std::vector<LocalHit>& hits) const {
     }
 
     return subpads;
+}
+
+void WaveformBuilder::BuildPolyaGainTable() {
+    const int nBins = m_cfg.electronics.polyaBins;
+    const double theta = m_cfg.electronics.polyaParameter;
+    const double maxGainRatio = m_cfg.electronics.polyaMaxGainRatio;
+
+    if (nBins < 2) {
+        throw std::runtime_error("WaveformBuilder: electronics.polya_gain.n_bins must be >= 2");
+    }
+    if (theta <= -1.0) {
+        throw std::runtime_error(
+            "WaveformBuilder: electronics.polya_gain.polya_parameter must be > -1");
+    }
+    if (maxGainRatio <= 0.0) {
+        throw std::runtime_error(
+            "WaveformBuilder: electronics.polya_gain.max_gain_ratio must be > 0");
+    }
+    if (m_cfg.electronics.polyaMeanGain <= 0.0) {
+        throw std::runtime_error(
+            "WaveformBuilder: electronics.polya_gain.mean_gain must be > 0");
+    }
+
+    m_polyaCdf.assign(nBins, 0.0);
+    m_polyaGainRatioCenter.assign(nBins, 0.0);
+
+    const double norm = (theta + 1.0) / std::tgamma(theta + 1.0);
+    double cumulative = 0.0;
+    for (int i = 0; i < nBins; ++i) {
+        const double ratio = static_cast<double>(i) * maxGainRatio /
+                             static_cast<double>(nBins);
+        const double density =
+            norm * std::pow((theta + 1.0) * ratio, theta) *
+            std::exp(-(theta + 1.0) * ratio);
+
+        if (std::isfinite(density) && density > 0.0) {
+            cumulative += density;
+        }
+        m_polyaCdf[i] = cumulative;
+        m_polyaGainRatioCenter[i] =
+            ratio + maxGainRatio / (2.0 * static_cast<double>(nBins));
+    }
+
+    if (cumulative <= 0.0 || !std::isfinite(cumulative)) {
+        throw std::runtime_error(
+            "WaveformBuilder: failed to build a valid Polya gain integral");
+    }
+
+    for (auto& value : m_polyaCdf) {
+        value /= cumulative;
+    }
+    m_polyaCdf.back() = 1.0;
+}
+
+double WaveformBuilder::SampleAvalancheGain() {
+    if (m_gainModel == GainModel::Constant) {
+        return clampPositive(m_cfg.electronics.avalancheGain);
+    }
+
+    const double u = m_unitDistribution(m_gainRng);
+    for (std::size_t i = 1; i < m_polyaCdf.size(); ++i) {
+        if (u > m_polyaCdf[i - 1] && u < m_polyaCdf[i]) {
+            return clampPositive(
+                std::floor(m_polyaGainRatioCenter[i - 1] *
+                           m_cfg.electronics.polyaMeanGain));
+        }
+    }
+
+    return 0.0;
 }
 
 std::vector<double> WaveformBuilder::BuildResponseKernel() const {
