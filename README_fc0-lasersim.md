@@ -1286,3 +1286,79 @@ Summary:
 output_level: 2  -> no waveform tree, no pad waveforms in display
 output_level: 3  -> writes waveforms tree, pad waveforms visible in display
 ```
+
+## 2026-05-28 ERAM 2 Waveform Dominance
+
+Observation:
+
+```text
+In the event display, almost all visible waveform pads appear in ERAM 2.
+```
+
+The current `output.root` was checked directly, not only through the display.
+The `waveforms` tree contains:
+
+```text
+entries: 100 events
+total waveform pads by ERAM:
+  ERAM 1: 32
+  ERAM 2: 24281
+```
+
+Example events:
+
+```text
+event 0:  nActivePads = 251, ERAM counts = {2: 251}
+event 26: nActivePads = 269, ERAM counts = {1: 32, 2: 237}
+```
+
+Therefore the event display is not hiding large numbers of waveform pads in
+other ERAMs; the waveform tree itself is dominated by ERAM 2.
+
+Current track configuration:
+
+```json
+"track": {
+  "particle": "muon",
+  "momentum_GeV": 1.0,
+  "position": { "x_mm": 187.0, "y_mm": 100, "z_mm": 0.0 },
+  "direction": { "dx": 0.0, "dy": 0.0, "dz": 1.0 }
+}
+```
+
+This starts a track on the top-row side of the HAT layout near `z = 0` and moves
+toward positive `z`.
+
+Relevant top-row ERAM Z coverage:
+
+```text
+ERAM 0: z = [-834.48, -428.52] mm
+ERAM 1: z = [-413.48,   -7.52] mm
+ERAM 2: z = [   7.52,  413.48] mm
+ERAM 3: z = [ 428.52,  834.48] mm, quartz-window position
+```
+
+Because the track starts near `z = 0` and goes in the positive `z` direction, it
+naturally populates ERAM 2 first. The next top-row region in positive `z` is
+ERAM 3, but in this geometry ERAM 3 is the quartz-window position and waveform
+creation intentionally skips it. This explains why the output is almost all
+ERAM 2 for the current run.
+
+For a test intended to populate multiple top-row pad ERAMs, use a track that
+starts before ERAM 0 and crosses through the row, for example:
+
+```json
+"position": { "x_mm": 187.0, "y_mm": 100.0, "z_mm": -850.0 },
+"direction": { "dx": 0.0, "dy": 0.0, "dz": 1.0 }
+```
+
+This should cross ERAM 0, ERAM 1, ERAM 2, and then the ERAM 3 quartz-window
+region. For the bottom row, use a negative `y_mm`, for example `y_mm = -100.0`.
+
+Current conclusion:
+
+```text
+No display bug was found for this observation.
+The current run geometry mostly creates waveform pads in ERAM 2.
+ERAM 3 is skipped by design because it is the quartz-window ERAM.
+```
