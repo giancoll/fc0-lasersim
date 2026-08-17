@@ -3,8 +3,35 @@ build*/
 bin/tpcmc
 *.root
 analysis_plots/
+old_plots/
 __pycache__/
+*.pyc
+.venv/
 *.o
 *.a
+.so
 .DS_Store
 gas_files/*.gas
+
+# Local run products and packed copies.
+*.out
+*.output
+*.log
+*.tgz
+*.tar.gz
+*.zip
+*.backup
+history_*
+old/
+docs/thesis_muon_laser_100tracks_comparison.tex
+
+# Locally linked notes, reports, and thesis directories are outside the
+# distributable source tree.
+*.docx
+Tesi-Elena
+README_fc0-lasersim_appunti.md
+README_fc0-lasersim_intro_default.md
+README_fc0-lasersim_wiki.md
+
+# Locally compiled analysis executable.
+Analisi_Elena/fc0_elena_analysis

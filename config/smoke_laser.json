@@ -1,0 +1,14 @@
+{
+  "extends": "horizontal_active_row_shared.json",
+  "run": {
+    "n_events": 1,
+    "output_file": "smoke_laser.root",
+    "random_seed": 1002
+  },
+  "generator": {
+    "type": "laser",
+    "laser": {
+      "model": "mpi"
+    }
+  }
+}

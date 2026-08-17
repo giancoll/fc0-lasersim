@@ -2,16 +2,17 @@
 #include "generator/PrimaryGenerator.hh"
 #include "config/Config.hh"
 #include <cmath>
+#include <utility>
 #include <vector>
 #include <TVector3.h>
 
 class TRandom3;
 
-/// UV laser track generator — simulates (1+1) REMPI ionisation of trace
-/// aromatic impurities (e.g. toluene) in the TPC gas by a 266 nm pulsed laser.
+/// UV laser track generator.
 ///
-/// Physics:
-///   dNe/dz = impurityYield * (E_lambda / (hnu * A * tau))^2
+/// model="ideal" keeps the historical flat source for detector tests.
+/// model="mpi" uses an M2 Gaussian beam propagation model and configurable
+/// low-depletion multiphoton-ionisation channels.
 ///
 /// Beam modes:
 ///   - Straight  (mirror.enabled = false): beam travels from (zMm,yMm,xStartMm)
@@ -69,7 +70,23 @@ private:
                               double segLen,
                               std::vector<PrimaryElectron>& out);
 
+    /// M2 Gaussian propagation plus low-depletion multiphoton ionisation.
+    void GenerateMpiSegment(const TVector3& origin, const TVector3& dir,
+                            double segLen, double opticalS0Mm,
+                            std::vector<PrimaryElectron>& out);
+
+    void GenerateSegment(const TVector3& origin, const TVector3& dir,
+                         double segLen, double opticalS0Mm,
+                         std::vector<PrimaryElectron>& out);
+
+    std::pair<double, double> BeamRadiiMm(double opticalSMm) const;
+    double PeakIntensityWPerCm2(double opticalSMm) const;
+    double TotalGasNumberDensityCm3() const;
+    double ChannelNumberDensityCm3(const LaserIonizationChannelConfig& channel) const;
+    bool InTpcBounds(const TVector3& point) const;
+
     LaserConfig    m_cfg;
+    GasConfig      m_gasCfg;
     DetectorConfig m_detCfg;
     TRandom3*      m_rand = nullptr;
     std::vector<TVector3> m_truePosition;

@@ -1,0 +1,95 @@
+{
+  "run": {
+    "n_events": 1,
+    "drift_method": "MC",
+    "field_type": "user",
+    "output_file": "output_laser_mpi.root",
+    "random_seed": 42,
+    "output_level": 1,
+    "output_format": "root"
+  },
+
+  "gas": {
+    "components": ["Ar", "CF4", "iC4H10"],
+    "fractions": [95.0, 3.0, 2.0],
+    "pressure_atm": 1.0,
+    "temperature_K": 293.15,
+    "gas_file": "../gas_files/T2K_ExBxA_6x6x6_293K_760Torr.gas",
+    "save_gas_file": ""
+  },
+
+  "detector": {
+    "drift_length_mm": 974.6,
+    "pad_pitch_x_mm": 7.0,
+    "pad_pitch_y_mm": 10.0,
+    "n_pads_x": 36,
+    "n_pads_y": 32,
+    "pad_size_x_mm": 6.5,
+    "pad_size_y_mm": 9.5,
+    "tpc_bounds": {
+      "x_min_mm": 0.0,
+      "x_max_mm": 974.6,
+      "y_min_mm": -370.6,
+      "y_max_mm": 370.6,
+      "z_min_mm": -890.0,
+      "z_max_mm": 890.0
+    }
+  },
+
+  "electronics": {
+    "sampling_frequency_MHz": 40.0,
+    "n_samples": 511,
+    "gain": 1000.0,
+    "shaping_time_ns": 25.0,
+    "threshold_adc": 10,
+    "dynamic_range_mV": 2000.0,
+    "adc_bits": 12,
+    "gain_model": "constant",
+    "avalanche_gain": 1000.0,
+    "normalize_waveforms": true
+  },
+
+  "generator": {
+    "type": "laser",
+    "laser": {
+      "model": "mpi",
+      "position": {
+        "z_mm": 0.0,
+        "y_mm": 0.0,
+        "x_start_mm": 0.0,
+        "x_end_mm": 974.6
+      },
+      "direction": {
+        "dx": 1.0,
+        "dy": 0.0,
+        "dz": 0.0
+      },
+      "optics": {
+        "wavelength_nm": 266.0,
+        "pulse_energy_mJ": 1.0,
+        "pulse_duration_ns": 5.0,
+        "waist_x_mm": 0.5,
+        "waist_y_mm": 0.5,
+        "waist_s_mm": 450.0,
+        "m2_x": 1.2,
+        "m2_y": 1.2,
+        "propagation_step_mm": 1.0,
+        "pointing_jitter_mm": 0.0
+      },
+      "ionization": {
+        "max_primaries_per_step": 10000,
+        "channels": [
+          {
+            "name": "isobutane_3photon_effective",
+            "gas_component": "iC4H10",
+            "photon_order": 3,
+            "coefficient": 1.0e-30
+          }
+        ]
+      },
+      "mirror": {
+        "enabled": false
+      }
+    }
+  }
+}

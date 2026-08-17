@@ -1,0 +1,113 @@
+{
+  "run": {
+    "n_events": 100,
+    "drift_method": "MC",
+    "field_type": "user",
+    "output_level": 2,
+    "output_format": "root"
+  },
+  "gas": {
+    "components": [
+      "Ar",
+      "CF4",
+      "iC4H10"
+    ],
+    "fractions": [
+      95.0,
+      3.0,
+      2.0
+    ],
+    "pressure_atm": 1.0,
+    "temperature_K": 293.15,
+    "gas_file": "../gas_files/T2K_ExBxA_6x6x6_293K_760Torr.gas",
+    "save_gas_file": ""
+  },
+  "detector": {
+    "drift_length_mm": 974.6,
+    "pad_pitch_x_mm": 7.0,
+    "pad_pitch_y_mm": 10.0,
+    "n_pads_x": 36,
+    "n_pads_y": 32,
+    "pad_size_x_mm": 6.5,
+    "pad_size_y_mm": 9.5,
+    "tpc_bounds": {
+      "x_min_mm": 0.0,
+      "x_max_mm": 974.6,
+      "y_min_mm": -370.6,
+      "y_max_mm": 370.6,
+      "z_min_mm": -890.0,
+      "z_max_mm": 890.0
+    }
+  },
+  "electronics": {
+    "sampling_frequency_MHz": 40.0,
+    "n_samples": 511,
+    "gain": 1000.0,
+    "shaping_time_ns": 25.0,
+    "threshold_adc": 10,
+    "dynamic_range_mV": 2000.0,
+    "adc_bits": 12,
+    "gain_model": "constant",
+    "avalanche_gain": 1000.0,
+    "normalize_waveforms": true
+  },
+  "generator": {
+    "track": {
+      "particle": "muon",
+      "momentum_GeV": 1.0,
+      "position": {
+        "x_mm": 187.0,
+        "y_mm": -170.5,
+        "z_mm": -820.0
+      },
+      "direction": {
+        "dx": 0.0,
+        "dy": 0.0,
+        "dz": 1.0
+      }
+    },
+    "laser": {
+      "model": "mpi",
+      "position": {
+        "x_start_mm": 187.0,
+        "y_mm": -170.5,
+        "z_mm": -820.0,
+        "x_end_mm": 187.0
+      },
+      "direction": {
+        "dx": 0.0,
+        "dy": 0.0,
+        "dz": 1.0
+      },
+      "optics": {
+        "wavelength_nm": 266.0,
+        "pulse_energy_mJ": 1.0,
+        "pulse_duration_ns": 5.0,
+        "waist_x_mm": 0.205755,
+        "waist_y_mm": 0.205755,
+        "waist_s_mm": 870.0,
+        "m2_x": 1.0,
+        "m2_y": 1.0,
+        "propagation_step_mm": 1.0,
+        "pointing_jitter_mm": 0.0
+      },
+      "ionization": {
+        "max_primaries_per_step": 100000,
+        "channels": [
+          {
+            "name": "two_photon_effective_1ppm",
+            "species": "toluene_or_contaminant",
+            "photon_order": 2,
+            "species_fraction": 1e-06,
+            "coefficient": 1e-17,
+            "saturate": false,
+            "enabled": true
+          }
+        ]
+      },
+      "mirror": {
+        "enabled": false
+      }
+    }
+  }
+}

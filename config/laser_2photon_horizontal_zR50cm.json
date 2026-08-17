@@ -1,0 +1,14 @@
+{
+  "extends": "horizontal_active_row_shared.json",
+  "run": {
+    "output_file": "output_laser_2photon_horizontal_zR50cm.root",
+    "random_seed": 4242,
+    "output_level": 1
+  },
+  "generator": {
+    "type": "laser",
+    "laser": {
+      "model": "mpi"
+    }
+  }
+}

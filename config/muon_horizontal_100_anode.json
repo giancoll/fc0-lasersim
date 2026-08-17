@@ -1,0 +1,13 @@
+{
+  "extends": "horizontal_active_row_shared.json",
+  "run": {
+    "output_file": "output_muon_horizontal_100_anode.root",
+    "random_seed": 42001
+  },
+  "generator": {
+    "type": "track",
+    "track": {
+      "particle": "muon"
+    }
+  }
+}

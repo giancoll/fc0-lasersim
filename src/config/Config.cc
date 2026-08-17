@@ -6,21 +6,15 @@
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
-Config Config::Load(const std::string& path) {
-    std::ifstream f(path);
-    if (!f.is_open())
-        throw std::runtime_error("Config: cannot open file: " + path);
+namespace {
 
-    const fs::path configDir = fs::absolute(fs::path(path)).parent_path();
+void ApplyJsonToConfig(const json& j, Config& cfg, const fs::path& configDir) {
     const auto resolveConfigPath = [&configDir](const std::string& value) {
         if (value.empty()) return value;
         const fs::path p(value);
         if (p.is_absolute()) return p.lexically_normal().string();
         return (configDir / p).lexically_normal().string();
     };
-
-    json j = json::parse(f);
-    Config cfg;
 
     // --- run ---
     if (j.contains("run")) {
@@ -112,6 +106,80 @@ Config Config::Load(const std::string& path) {
         if (gen.contains("laser")) {
             auto& l = gen["laser"];
             cfg.generator.laser.model         = l.value("model", cfg.generator.laser.model);
+            const double legacyWaistMm        = l.value("beam_waist_mm", cfg.generator.laser.beamWaistXMm);
+            cfg.generator.laser.beamWaistXMm  = l.value("beam_waist_x_mm", legacyWaistMm);
+            cfg.generator.laser.beamWaistYMm  = l.value("beam_waist_y_mm", legacyWaistMm);
+            cfg.generator.laser.pulseDurationS = l.value("pulse_duration_s", cfg.generator.laser.pulseDurationS);
+            cfg.generator.laser.pulseEnergyJ  = l.value("pulse_energy_J", cfg.generator.laser.pulseEnergyJ);
+            cfg.generator.laser.wavelengthNm  = l.value("wavelength_nm", cfg.generator.laser.wavelengthNm);
+            cfg.generator.laser.waistSMm      = l.value("waist_s_mm", cfg.generator.laser.waistSMm);
+            cfg.generator.laser.m2X           = l.value("m2_x", cfg.generator.laser.m2X);
+            cfg.generator.laser.m2Y           = l.value("m2_y", cfg.generator.laser.m2Y);
+            cfg.generator.laser.propagationStepMm =
+                l.value("propagation_step_mm", cfg.generator.laser.propagationStepMm);
+            cfg.generator.laser.pointingJitterMm =
+                l.value("pointing_jitter_mm", cfg.generator.laser.pointingJitterMm);
+            cfg.generator.laser.maxPrimariesPerStep =
+                l.value("max_primaries_per_step", cfg.generator.laser.maxPrimariesPerStep);
+
+            if (l.contains("optics")) {
+                const auto& o = l["optics"];
+                cfg.generator.laser.wavelengthNm =
+                    o.value("wavelength_nm", cfg.generator.laser.wavelengthNm);
+                cfg.generator.laser.pulseEnergyJ =
+                    o.value("pulse_energy_J", cfg.generator.laser.pulseEnergyJ);
+                if (o.contains("pulse_energy_mJ")) {
+                    cfg.generator.laser.pulseEnergyJ = o["pulse_energy_mJ"].get<double>() * 1.0e-3;
+                }
+                cfg.generator.laser.pulseDurationS =
+                    o.value("pulse_duration_s", cfg.generator.laser.pulseDurationS);
+                if (o.contains("pulse_duration_ns")) {
+                    cfg.generator.laser.pulseDurationS = o["pulse_duration_ns"].get<double>() * 1.0e-9;
+                }
+                const double opticsWaistMm =
+                    o.value("waist_mm", cfg.generator.laser.beamWaistXMm);
+                cfg.generator.laser.beamWaistXMm =
+                    o.value("waist_x_mm", opticsWaistMm);
+                cfg.generator.laser.beamWaistYMm =
+                    o.value("waist_y_mm", opticsWaistMm);
+                cfg.generator.laser.waistSMm =
+                    o.value("waist_s_mm", cfg.generator.laser.waistSMm);
+                cfg.generator.laser.m2X =
+                    o.value("m2_x", cfg.generator.laser.m2X);
+                cfg.generator.laser.m2Y =
+                    o.value("m2_y", cfg.generator.laser.m2Y);
+                cfg.generator.laser.propagationStepMm =
+                    o.value("propagation_step_mm", cfg.generator.laser.propagationStepMm);
+                cfg.generator.laser.pointingJitterMm =
+                    o.value("pointing_jitter_mm", cfg.generator.laser.pointingJitterMm);
+            }
+
+            if (l.contains("ionization")) {
+                const auto& ion = l["ionization"];
+                cfg.generator.laser.maxPrimariesPerStep =
+                    ion.value("max_primaries_per_step", cfg.generator.laser.maxPrimariesPerStep);
+                if (ion.contains("channels")) {
+                    cfg.generator.laser.ionizationChannels.clear();
+                    for (const auto& c : ion["channels"]) {
+                        LaserIonizationChannelConfig ch;
+                        ch.name = c.value("name", ch.name);
+                        ch.gasComponent = c.value("gas_component", c.value("species", ch.gasComponent));
+                        ch.photonOrder = c.value("photon_order", c.value("order", ch.photonOrder));
+                        ch.speciesFraction = c.value("species_fraction", c.value("fraction", ch.speciesFraction));
+                        if (c.contains("species_fraction_percent")) {
+                            ch.speciesFraction = c["species_fraction_percent"].get<double>() / 100.0;
+                        }
+                        if (c.contains("fraction_percent")) {
+                            ch.speciesFraction = c["fraction_percent"].get<double>() / 100.0;
+                        }
+                        ch.numberDensityCm3 = c.value("number_density_cm3", ch.numberDensityCm3);
+                        ch.coefficient = c.value("coefficient", c.value("sigma", ch.coefficient));
+                        ch.saturate = c.value("saturate", ch.saturate);
+                        ch.enabled = c.value("enabled", ch.enabled);
+                        cfg.generator.laser.ionizationChannels.push_back(ch);
+                    }
+                }
+            }
             if (l.contains("ideal"))
                 cfg.generator.laser.clusterDensity =
                     l["ideal"].value("cluster_density", cfg.generator.laser.clusterDensity);
@@ -158,6 +226,35 @@ Config Config::Load(const std::string& path) {
             }
         }
     }
+}
+
+} // namespace
+
+Config Config::Load(const std::string& path) {
+    std::ifstream f(path);
+    if (!f.is_open())
+        throw std::runtime_error("Config: cannot open file: " + path);
+
+    const fs::path configDir = fs::absolute(fs::path(path)).parent_path();
+    const auto resolveConfigPath = [&configDir](const std::string& value) {
+        if (value.empty()) return value;
+        const fs::path p(value);
+        if (p.is_absolute()) return p.lexically_normal().string();
+        return (configDir / p).lexically_normal().string();
+    };
+
+    json j = json::parse(f);
+    Config cfg;
+    if (j.contains("extends")) {
+        const std::string basePath = (j["extends"].is_string())
+            ? j["extends"].get<std::string>()
+            : "";
+        if (basePath.empty()) {
+            throw std::runtime_error("Config: extends must be a string in " + path);
+        }
+        cfg = Load(resolveConfigPath(basePath));
+    }
+    ApplyJsonToConfig(j, cfg, configDir);
 
     return cfg;
 }

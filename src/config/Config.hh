@@ -88,11 +88,37 @@ struct MirrorConfig {
     double tiltPhiDeg   = 0.0;   // azimuthal angle of normal [deg]
 };
 
+struct LaserIonizationChannelConfig {
+    std::string name = "isobutane_3photon";
+    std::string gasComponent = "iC4H10"; // match gas.components when density/fraction are unset
+    int    photonOrder       = 3;
+    double speciesFraction   = 0.0; // mole fraction [0,1]; overrides gasComponent if > 0
+    double numberDensityCm3  = 0.0; // explicit neutral density [cm^-3]; overrides fraction
+    double coefficient       = 0.0; // effective generalized MPI coefficient, fit/calibrate
+    bool   saturate          = false;
+    bool   enabled           = true;
+};
+
 struct LaserConfig {
     double zMm = 0., yMm = 0., xStartMm = 0., xEndMm = 720.;
     double dx = 1., dy = 0., dz = 0.;
     std::string model        = "ideal";
     double clusterDensity    = 1.0;   // mean primaries per mm of beam path
+
+    // Optics model for model="mpi". Gaussian real beam with M2 propagation.
+    double wavelengthNm      = 266.0;
+    double pulseEnergyJ      = 1.0e-3;
+    double pulseDurationS    = 5.0e-9; // FWHM
+    double beamWaistXMm      = 0.5;    // 1/e^2 radius at waist
+    double beamWaistYMm      = 0.5;    // 1/e^2 radius at waist
+    double waistSMm          = 0.0;    // waist position along optical path from beam origin
+    double m2X               = 1.0;
+    double m2Y               = 1.0;
+    double propagationStepMm = 1.0;
+    double pointingJitterMm  = 0.0;
+    int    maxPrimariesPerStep = 100000;
+
+    std::vector<LaserIonizationChannelConfig> ionizationChannels;
     MirrorConfig mirror;
 };
 

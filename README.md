@@ -1,59 +1,48 @@
-# FC0-laserSim
+# FC0 Laser Simulation
 
+`fc0-lasersim` simulates charged-particle and laser-induced ionisation in the
+FC0/HAT TPC. It combines Garfield++/Heed/Magboltz transport with a custom
+Gaussian-beam multiphoton-ionisation source, HAT pad geometry, resistive charge
+spreading, electronics response, ROOT output, and comparison analyses.
 
+## Documentation
 
-## Requirements
+- [Installation](docs/INSTALL.md): ROOT, Geant4, Garfield++, and dependencies.
+- [Build, run, and analysis](docs/RUNNING.md): configurations, production jobs,
+  event displays, and muon/laser comparisons.
+- [Physics and architecture](docs/PHYSICS_AND_ARCHITECTURE.md): complete cascade,
+  functions, parameters, validation strategy, and known limitations.
 
-Garfield++: https://gitlab.cern.ch/garfield/garfieldpp
-Tags: 2025.12
+The verified baseline is AlmaLinux 9, ROOT 6.38.00, Garfield++ 2025.12, and
+Geant4 11.4.1.
 
-ROOT
+## Quick Start
 
-This AlmaLinux 9 WSL2 setup was verified with:
-
-```text
-ROOT:      /opt/software/root-6.38.00/build
-Garfield++ /local/simulazioni/garfieldpp/install
-Geant4:    /local/simulazioni/geant4/geant4-v11.4.1-install
-```
-
-`nlohmann_json` is expected to be available as a local CMake package. On this
-machine it is installed under `/usr/local`, so CMake can configure without
-downloading from GitHub.
-
-## Compilation
-
-Activate the runtime environments:
+After installing the dependencies:
 
 ```bash
-source /opt/software/root-6.38.00/build/bin/thisroot.sh
-source /local/simulazioni/geant4/geant4-v11.4.1-install/bin/geant4.sh
-source /local/simulazioni/garfieldpp/install/share/Garfield/setupGarfield.sh
+export FC0_DEPS="$HOME/opt/fc0"
+source scripts/setup_env.sh
+
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+  -DFC0_ROOT_PREFIX="$ROOT_PREFIX" \
+  -DFC0_GARFIELD_PREFIX="$GARFIELD_INSTALL" \
+  -DFC0_GEANT4_PREFIX="$GEANT4_INSTALL"
+cmake --build build -j"$(nproc)"
+
+./build/tpcmc config/laser_mpi_example.json
 ```
 
-Configure and build:
+The build produces `build/tpcmc` and `build/viz_hat_geometry`. Muon jobs also
+require `HEED_DATABASE`; `scripts/setup_env.sh` sets it from the Garfield++
+installation.
 
-```bash
-cmake -S /local/simulazioni/fc0-lasersim \
-  -B /local/simulazioni/fc0-lasersim/build-almalinux9-gpt \
-  -DCMAKE_PREFIX_PATH="/opt/software/root-6.38.00/build;/local/simulazioni/garfieldpp/install;/local/simulazioni/geant4/geant4-v11.4.1-install;/usr/local"
+## Distribution
 
-cmake --build /local/simulazioni/fc0-lasersim/build-almalinux9-gpt -j"$(nproc)"
-```
-
-The build produces:
-
-```text
-build-almalinux9-gpt/tpcmc
-build-almalinux9-gpt/viz_hat_geometry
-```
-
-Run the main simulation with:
-
-```bash
-cd /local/simulazioni/fc0-lasersim
-./build-almalinux9-gpt/tpcmc config/simulation.json
-```
+This tree includes a bundled `external/oaEvent` snapshot without a repository
+license notice. Keep the teaching repository private until the ownership and
+redistribution terms of that dependency and the project as a whole are
+confirmed.
 
 For a first waveform-display test, edit `config/simulation.json` before running:
 
@@ -129,6 +118,81 @@ The old TPCMC `MC_ResMM::eGain()` Polya-style gain can be enabled with:
 `random_seed: -1` derives an independent gain RNG seed from `run.random_seed`.
 The older `electronics.gain` field is still the ADC conversion factor used only
 when `normalize_waveforms` is false.
+
+## Laser MPI Model
+
+The laser generator supports two source models:
+
+```json
+"generator": {
+  "type": "laser",
+  "laser": {
+    "model": "ideal"
+  }
+}
+```
+
+`ideal` keeps the historical flat test source configured by
+`laser.ideal.cluster_density`.
+
+For the physics model described in
+`laser_generated_tracks_tpc_report_v1.docx`, use:
+
+```json
+"generator": {
+  "type": "laser",
+  "laser": {
+    "model": "mpi",
+    "optics": {
+      "wavelength_nm": 266.0,
+      "pulse_energy_mJ": 1.0,
+      "pulse_duration_ns": 5.0,
+      "waist_x_mm": 0.5,
+      "waist_y_mm": 0.5,
+      "waist_s_mm": 450.0,
+      "m2_x": 1.2,
+      "m2_y": 1.2,
+      "propagation_step_mm": 1.0,
+      "pointing_jitter_mm": 0.0
+    },
+    "ionization": {
+      "channels": [
+        {
+          "name": "isobutane_3photon_effective",
+          "gas_component": "iC4H10",
+          "photon_order": 3,
+          "coefficient": 1.0e-30
+        }
+      ]
+    }
+  }
+}
+```
+
+The optics model is a real Gaussian beam with separate `M2` propagation in the
+two transverse directions. The ionization model uses the low-depletion
+Gaussian-pulse MPI source term:
+
+```text
+n_e,N(r,s) = n_gas sigma_N I_spatial_peak(r,s)^N tau_FWHM sqrt(pi/(4 N ln 2))
+```
+
+The generalized MPI `coefficient` is intentionally an effective fit parameter.
+Use measured beam parameters and tune coefficients against charge, width, and
+energy-scan data. A runnable starting point is available in:
+
+```bash
+./build-almalinux9-gpt/tpcmc config/laser_mpi_example.json
+```
+
+Shared geometry templates for the horizontal active-row studies live in:
+
+```bash
+config/horizontal_active_row_shared.json
+```
+
+The muon and laser 100-event configs extend this base file and only override
+the run label, seed, and generator-specific fields.
 
 ## Event Display
 
